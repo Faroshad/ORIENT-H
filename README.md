@@ -151,14 +151,6 @@ The system generates comprehensive CFR analysis reports:
 - `cfr_data_TIMESTAMP.json` - Raw regret data and convergence metrics
 - Individual plot images for each analysis component
 
-**Analysis Metrics:**
-- Cumulative regret convergence
-- Strategy probability evolution
-- Nash equilibrium distance
-- Per-strategy regret comparison
-- Expected value trajectories
-
----
 
 ## API Endpoints
 
@@ -174,23 +166,6 @@ The system generates comprehensive CFR analysis reports:
 
 ---
 
-## Project Structure
-
-```
-ORIENT-H/
-├── server/
-│   ├── app.py                 # Flask API server
-│   ├── regret_engine.py       # CFR algorithm implementation
-│   └── output/                # Analysis results
-├── Unity_Assets/
-│   ├── Scripts/               # Unity C# scripts
-│   └── Scenes/                # Unity scene files
-├── requirements.txt           # Python dependencies
-├── UNITY_RUN_GUIDE.txt        # Unity setup instructions
-└── README.md                  # This file
-```
-
----
 
 ## Key Features
 
@@ -228,7 +203,4 @@ This project is developed for academic research purposes.
 
 ---
 
-## Acknowledgments
-
-Developed as part of research in multi-agent reinforcement learning and healthcare optimization at Texas A&M University.
 
