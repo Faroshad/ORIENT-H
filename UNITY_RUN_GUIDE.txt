@@ -1,0 +1,278 @@
+============================================================
+UNITY INTEGRATION GUIDE - ORIENT-H
+============================================================
+This guide explains how to set up and run the Unity visualization
+for the ORIENT-H emergency unit simulation.
+
+For general project information and algorithm details, see README.md
+
+
+PREREQUISITES
+-------------
+• Unity 2021.3 or later
+• Python server running (see README.md for server setup)
+• Unity NavMesh Components package installed
+• Project assets imported (Unity_Assets folder)
+
+
+UNITY SETUP STEPS
+-----------------
+
+1. SCENE SETUP
+
+   a) Import Unity Assets:
+      - Copy Unity_Assets/ folder contents into your Unity project
+      - Scripts go in Assets/Scripts/
+      - Scenes in Assets/Scenes/
+
+   b) Create Floor:
+      - Create a plane or floor GameObject
+      - Add NavMeshSurface component
+      - Set layer to "Floor" or appropriate navigation layer
+      - Scale to desired hospital layout size
+
+
+2. ROOM SETUP
+
+   Required Rooms (create as GameObjects with colliders):
+   
+   • ENT (Entrance) - Patient spawn point
+   • WAITING - Waiting area where patients queue
+   • TRIAGE - Initial assessment room
+   • TB (Treatment Bay) - Primary treatment room
+   • LAB - Laboratory/testing room
+   • ICU - Intensive care unit
+   
+   Each room should have:
+   - BoxCollider or appropriate collider
+   - Tag set to room name (e.g., "TRIAGE", "TB")
+   - Transform positioned in desired location
+   - Optional: Visual marker or model
+
+
+3. NAVMESH CONFIGURATION
+
+   a) Add NavMeshSurface:
+      - Select floor GameObject
+      - Add Component → NavMesh → NavMesh Surface
+      - Set Agent Type to "Humanoid" or default
+      - Set Agent Radius: 0.5, Height: 2.0, Step Height: 0.4
+   
+   b) Bake NavMesh:
+      - Click "Bake" button in NavMeshSurface component
+      - Ensure all walkable areas are covered (blue)
+      - Rooms should be accessible via NavMesh paths
+      - Test by adding temporary NavMeshAgent to verify paths
+
+
+4. AGENT SETUP
+
+   a) Create Nurse GameObject:
+      - Create 3D model or capsule (representing nurse)
+      - Add Component → NavMesh Agent
+      - Add Component → AgentController script
+      - Set AgentController.role = "Nurse"
+      - Position at ENT or starting location
+   
+   b) Create Doctor GameObject:
+      - Create 3D model or capsule (representing doctor)
+      - Add Component → NavMesh Agent
+      - Add Component → AgentController script
+      - Set AgentController.role = "Doctor"
+      - Position at ENT or starting location
+   
+   c) Agent Components Required:
+      - NavMeshAgent (for pathfinding)
+      - Animator (optional, for animations)
+      - AgentController script
+      - Rigidbody (optional, for physics interactions)
+   
+   d) Animator Setup (if using animations):
+      - Create Animator Controller
+      - Add parameters: "Speed" (float), "IsWalking" (bool)
+      - Link animation states based on agent movement
+
+
+5. PATIENT PREFAB SETUP
+
+   a) Create Patient Prefab:
+      - Create capsule or character model
+      - Add Component → NavMesh Agent
+      - Add Component → PatientController script
+      - Add Component → Renderer (for color coding)
+      - Set colors: Red (Critical), Yellow (Moderate), Green (Minor)
+   
+   b) Configure PatientController:
+      - Set default patient type
+      - Configure movement speed
+      - Set patient ID system
+
+
+6. GAMEMANAGER CONFIGURATION
+
+   a) Create GameManager GameObject:
+      - Create empty GameObject named "GameManager"
+      - Add Component → GameManager script
+   
+   b) Assign References in GameManager:
+      - Nurse: Drag nurse GameObject to nurse field
+      - Doctor: Drag doctor GameObject to doctor field
+      - Patient Prefab: Drag patient prefab
+      - Spawn Point: Transform at ENT location
+      - Waiting Area: Transform at WAITING location
+   
+   c) UI Elements Assignment:
+      - Input Field: Text input for patient descriptions
+      - Send Button: Button to submit patient descriptions
+      - Status Text: Text component for status display
+      - Queue Text: Text component for patient queue display
+      - Strategy Text: Text component for strategy display
+      - Save Analysis Button: Button to export analysis
+
+
+7. SERVER COMMUNICATION
+
+   a) ServerCommunication Setup:
+      - Ensure ServerCommunication script is attached
+      - Set server URL: "http://localhost:5000"
+      - Configure API endpoints mapping
+   
+   b) Test Connection:
+      - Start Python server first (see README.md)
+      - In Unity, test connection via GameManager
+      - Check Unity Console for connection status
+
+
+RUNNING THE SIMULATION
+----------------------
+
+1. Start Python Server:
+   cd server
+   python app.py
+   (Server should run on http://localhost:5000)
+
+2. Open Unity Scene:
+   - Load SampleScene.unity or your configured scene
+   - Ensure all references are assigned in GameManager
+
+3. Play Scene:
+   - Press Play button in Unity Editor
+   - Scene should initialize with agents at ENT
+
+4. Enter Patient Description:
+   - Type in input field, e.g.:
+     "Two patients: one with chest pain (critical), one broken arm (moderate)"
+   - Click Send button
+
+5. Observe Simulation:
+   - Patients spawn at ENT and walk to WAITING
+   - Nurse and Doctor receive commands from server
+   - Agents escort patients through treatment pathways
+   - Watch real-time status updates in UI
+
+6. Save Analysis:
+   - After simulation runs, click "Save Analysis" button
+   - Charts are generated in server/output/ folder
+   - View regret convergence and strategy analysis
+
+
+TREATMENT FLOW IN UNITY
+------------------------
+
+1. Patient Spawning:
+   - Server parses natural language description
+   - Patients instantiated at ENT spawn point
+   - Patients automatically navigate to WAITING area
+
+2. Command Execution:
+   - Server generates optimal strategy via CFR
+   - Commands sent to Unity: ESCORT, TREAT, WAIT, LEAVE_PATIENT
+   - Agents execute commands in sequence
+
+3. Room Navigation:
+   - Agents pick up patients (ESCORT command)
+   - Navigate to target room via NavMesh
+   - Perform treatment with duration (TREAT command)
+   - Release patient or leave (LEAVE_PATIENT for ICU)
+
+4. Completion:
+   - Patient pathway complete
+   - Patient navigates back to ENT
+   - Removed from queue
+   - Statistics updated
+
+
+TROUBLESHOOTING
+---------------
+
+• Agents Not Moving:
+  - Check NavMesh is baked correctly
+  - Verify NavMeshAgent component is attached
+  - Ensure agent positions are on NavMesh
+  - Check GameManager has agent references assigned
+
+• Patients Not Spawning:
+  - Verify patientPrefab is assigned in GameManager
+  - Check spawnPoint transform is set
+  - Ensure server is running and connected
+  - Check Unity Console for error messages
+
+• No Server Communication:
+  - Verify Python server is running on port 5000
+  - Check ServerCommunication script server URL
+  - Test server endpoint: http://localhost:5000/health
+  - Check CORS settings in server/app.py
+
+• Navigation Issues:
+  - Re-bake NavMesh after scene changes
+  - Verify room colliders don't block NavMesh
+  - Check NavMeshAgent Obstacle Avoidance settings
+  - Ensure rooms are tagged correctly
+
+• UI Not Updating:
+  - Verify UI text components assigned in GameManager
+  - Check GameManager update methods are called
+  - Ensure server is returning valid JSON responses
+  - Check Unity Console for JSON parsing errors
+
+• Animations Not Playing:
+  - Verify Animator component has Animator Controller assigned
+  - Check animation parameters match script expectations
+  - Ensure "Speed" and "IsWalking" parameters exist
+  - Test animations in Animator window
+
+
+OPTIMIZATION TIPS
+-----------------
+
+• Performance:
+  - Limit maximum patients in scene (e.g., 10)
+  - Use object pooling for patient prefabs
+  - Optimize NavMesh agent count
+  - Reduce update frequency for non-critical UI elements
+
+• Visual Quality:
+  - Use LOD groups for complex models
+  - Optimize texture sizes
+  - Use occlusion culling for large scenes
+  - Implement frustum culling
+
+• Debugging:
+  - Enable NavMesh visualization (Window → AI → Navigation)
+  - Use Debug.DrawRay for path visualization
+  - Add logging to AgentController and PatientController
+  - Check server logs for request/response details
+
+
+ADDITIONAL RESOURCES
+--------------------
+
+• Unity NavMesh Documentation:
+  https://docs.unity3d.com/Manual/nav-BuildingNavMesh.html
+
+• Project Repository:
+  See README.md for repository link and contact information
+
+• Contact for Issues:
+  Farshad Askari - farshadaskari94@tamu.edu
+
